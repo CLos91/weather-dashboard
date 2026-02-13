@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        /* Search area */
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .search-input:focus {
+            outline: 2px solid #4a90d9;
+        }
+
+        .search-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4a90d9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .search-btn:hover {
+            background-color: #3a7bc8;
+        }
+
+        .search-help {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        /* Error message */
+        .error-box {
+            display: none;
+            background-color: #ffe0e0;
+            border: 1px solid #ff9999;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .error-box.active {
+            display: block;
+        }
+
+        .error-message {
+            color: #cc0000;
+            font-weight: bold;
+        }
+
+        .error-suggestion {
+            color: #884444;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        /* Weather card */
+        .weather-card {
+            display: none;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .weather-card.active {
+            display: block;
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .city-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .new-search-link {
+            color: #4a90d9;
+            cursor: pointer;
+            font-size: 14px;
+            background: none;
+            border: none;
+        }
+
+        .new-search-link:hover {
+            text-decoration: underline;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .weather-icon img {
+            width: 64px;
+            height: 64px;
+        }
+
+        .temp-display {
+            font-size: 42px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .weather-desc {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .feels-like {
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Unit toggle */
+        .unit-toggle-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 6px;
+        }
+
+        .unit-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .unit-btn {
+            padding: 6px 16px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .unit-btn.active {
+            background-color: #4a90d9;
+            color: white;
+            border-color: #4a90d9;
+        }
+
+        /* Details grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .detail-box {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .data-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #aaa;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            font-size: 12px;
+            color: #bbb;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Weather Dashboard</h1>
+        <p class="subtitle">Search any city or zip code to view current weather conditions</p>
+
+        <!-- Search -->
+        <div class="search-box">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="locationInput"
+                placeholder="Enter a city or zip code..."
+                autocomplete="off"
+            >
+            <button class="search-btn" id="searchBtn" onclick="searchWeather()">Search</button>
+        </div>
+        <p class="search-help">
+            Search by city name (e.g., Sacramento, CA) or zip code (e.g., 95336)
+        </p>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">Loading weather data...</div>
+
+        <!-- Error message -->
+        <div class="error-box" id="errorBox">
+            <div class="error-message" id="errorMessage"></div>
+            <div class="error-suggestion" id="errorSuggestion"></div>
+        </div>
+
+        <!-- Weather Card -->
+        <div class="weather-card" id="weatherCard">
+            <div class="location-header">
+                <div class="city-name" id="cityName"></div>
+                <button class="new-search-link" onclick="resetSearch()">&#8592; Search new location</button>
+            </div>
+
+            <div class="weather-main">
+                <div class="weather-icon">
+                    <img id="weatherIcon" src="" alt="Weather icon">
+                </div>
+                <div>
+                    <div class="temp-display" id="temperature"></div>
+                    <div class="weather-desc" id="description"></div>
+                    <div class="feels-like" id="feelsLike"></div>
+                </div>
+            </div>
+
+            <!-- Toggle between F and C -->
+            <div class="unit-toggle-section">
+                <span class="unit-label">Temperature unit:</span>
+                <button class="unit-btn active" id="btnF" onclick="setUnit('F')">°F</button>
+                <button class="unit-btn" id="btnC" onclick="setUnit('C')">°C</button>
+            </div>
+
+            <!-- Extra weather details -->
+            <div class="details-grid">
+                <div class="detail-box">
+                    <div class="detail-label">Humidity</div>
+                    <div class="detail-value" id="humidity"></div>
+                </div>
+                <div class="detail-box">
+                    <div class="detail-label">Wind Speed</div>
+                    <div class="detail-value" id="windSpeed"></div>
+                </div>
+                <div class="detail-box">
+                    <div class="detail-label">Pressure</div>
+                    <div class="detail-value" id="pressure"></div>
+                </div>
+                <div class="detail-box">
+                    <div class="detail-label">Feels Like</div>
+                    <div class="detail-value" id="feelsLikeDetail"></div>
+                </div>
+            </div>
+
+            <div class="data-info">
+                <span>Data from OpenWeatherMap</span>
+                <span id="responseTime"></span>
+            </div>
+        </div>
+
+        <p class="keyboard-hint">Press Enter to search or click the Search button</p>
+    </div>
+
+    <script>
+        let currentWeather = null;
+        let currentUnit = 'F';
+
+        const locationInput = document.getElementById('locationInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const loadingDiv = document.getElementById('loading');
+        const errorBox = document.getElementById('errorBox');
+        const weatherCard = document.getElementById('weatherCard');
+
+        async function searchWeather() {
+            const location = locationInput.value.trim();
+            if (!location) {
+                showError('Please enter a location.', "Try a city name like 'Portland, OR' or a zip code like '97201'");
+                return;
+            }
+
+            loadingDiv.classList.add('active');
+            errorBox.classList.remove('active');
+            weatherCard.classList.remove('active');
+            searchBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('location', location);
+
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentWeather = data;
+                    displayWeather(data);
+                } else {
+                    showError(data.error, data.suggestion);
+                }
+            } catch (err) {
+                showError('Something went wrong.', 'Check your connection and try again.');
+            } finally {
+                loadingDiv.classList.remove('active');
+                searchBtn.disabled = false;
+            }
+        }
+
+        function displayWeather(data) {
+            document.getElementById('cityName').textContent = data.city + ', ' + data.country;
+            document.getElementById('weatherIcon').src = 
+                'https://openweathermap.org/img/wn/' + data.icon + '@2x.png';
+            document.getElementById('description').textContent = data.description;
+            document.getElementById('humidity').textContent = data.humidity + '%';
+            document.getElementById('windSpeed').textContent = data.wind_speed + ' mph';
+            document.getElementById('pressure').textContent = data.pressure + ' hPa';
+            document.getElementById('responseTime').textContent = 'Response: ' + data.response_time_ms + 'ms';
+
+            updateTemps();
+            weatherCard.classList.add('active');
+            errorBox.classList.remove('active');
+        }
+
+        function setUnit(unit) {
+            currentUnit = unit;
+            document.getElementById('btnF').classList.toggle('active', unit === 'F');
+            document.getElementById('btnC').classList.toggle('active', unit === 'C');
+            updateTemps();
+        }
+
+        function updateTemps() {
+            if (!currentWeather) return;
+            const temp = currentUnit === 'F' ? currentWeather.temp_f : currentWeather.temp_c;
+            const feels = currentUnit === 'F' ? currentWeather.feels_like_f : currentWeather.feels_like_c;
+            const symbol = currentUnit === 'F' ? '°F' : '°C';
+
+            document.getElementById('temperature').textContent = temp + symbol;
+            document.getElementById('feelsLike').textContent = 'Feels like ' + feels + symbol;
+            document.getElementById('feelsLikeDetail').textContent = feels + symbol;
+        }
+
+        function resetSearch() {
+            locationInput.value = '';
+            locationInput.focus();
+            weatherCard.classList.remove('active');
+            errorBox.classList.remove('active');
+        }
+
+        function showError(message, suggestion) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorSuggestion').textContent = suggestion || '';
+            errorBox.classList.add('active');
+            weatherCard.classList.remove('active');
+        }
+
+        // Enter key to search
+        locationInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchWeather();
+        });
+
+        // Focus the search box when page loads
+        locationInput.focus();
+    </script>
+
+</body>
+</html>
